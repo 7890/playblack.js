@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>playblack.js Example2</title>
+<link rel="stylesheet" href="../css/playblack.css">
+<link rel="stylesheet" href="example.css">
+<script src="../js/jquery-3.3.1.slim.min.js"></script>
+<script src="../js/playblack.js"></script>
+<script src="pb_schema.js"></script>
+<script src="jsoneditor.min.js"></script>
+<script src="example2.js"></script>
+</head>
+<body>
+<h1>Example2: Options and Methods</h1>
+<ul>
+<li>Assemble a playitem with the JSON editor below</li>
+<li>To make a property 'null', disable it in 'Object Properties'</li>
+<li>A minimal playitem only needs the 'audio' property</li>
+<li>Hit enter or the 'load' button below the JSON editor to test the playitem</li>
+<li>Use the action buttons to manipulate a loaded track</li>
+<li>Hit the 'update' button to see the current player properties of a loaded track (augmented with default values and status info by playblack.js)</li>
+<li>Eventually check console output</li>
+</ul>
+<div id="json_editor"></div>
+<div id="button_holder">
+load track using above JSON object
+<input type="button" value="LOAD" id="load" onclick="javascript:pb.load(editor.getValue());">
+<br>player visibility:
+<input type="button" value="show" onclick="javascript:pb.show();">
+<input type="button" value="hide" onclick="javascript:pb.hide();">
+<br>seek to:
+<input type="button" value="0 &amp; play" onclick="javascript:pb.seek(0);pb.play();">
+<input type="button" value="7 &amp; pause" onclick="javascript:pb.seek(7);pb.pause();">
+<input type="button" value="-1 (relative)" onclick="javascript:pb.seek(-1,1);">
+<input type="button" value="+1 (relative)" onclick="javascript:pb.seek(1,1);">
+<input type="button" value="end -1 (relative)" onclick="javascript:pb.seek(-1,2);">
+<br>playback rate (same pitch):
+<input type="button" value="0.5" onclick="javascript:pb.rate(0.5);">
+<input type="button" value="1" onclick="javascript:pb.rate(1);">
+<input type="button" value="2" onclick="javascript:pb.rate(2);">
+<br>volume:
+<input type="button" value="mute" onclick="javascript:pb.mute();">
+<input type="button" value="unmute" onclick="javascript:pb.unmute();">
+<br>repeat:
+<input type="button" value="enable" onclick="javascript:pb.repeat(true);">
+<input type="button" value="disable" onclick="javascript:pb.repeat(false);">
+<br>navigation autoplay:
+<input type="button" value="enable" onclick="javascript:pb.navplay(true);">
+<input type="button" value="disable" onclick="javascript:pb.navplay(false);">
+<br>show load regions:
+<input type="button" value="enable" onclick="javascript:pb.bufreg(true);">
+<input type="button" value="disable" onclick="javascript:pb.bufreg(false);">
+<br>set title:
+<input type="button" value="(null)" onclick="javascript:pb.title();">
+<input type="button" value="('')" onclick="javascript:pb.title('');">
+<input type="button" value="('...')" onclick="javascript:pb.title('another title &lt;a href=\'#\'&gt;link&lt;/a&gt;');">
+<br>set cover:
+<input type="button" value="(null)" onclick="javascript:pb.cover();">
+<input type="button" value="('...')" onclick="javascript:pb.cover('img/cover2.png');">
+<input type="button" value="('...')" onclick="javascript:pb.cover('img/cover4.png');">
+<br>set cover_link:
+<input type="button" value="(null)" onclick="javascript:pb.cover_link();">
+<input type="button" value="('...')" onclick="javascript:pb.cover_link('javascript:alert(\'hi\')');">
+<br>set size:
+<input type="button" value="20 px" onclick="javascript:pb.size(20);">
+<input type="button" value="80 px" onclick="javascript:pb.size(80);">
+<input type="button" value="200 px" onclick="javascript:pb.size(200);">
+<br>remove and create player:
+<input type="button" value="remove current" onclick="javascript:pb.remove();pb=null;">
+<input type="button" value="create new if none existing" onclick="javascript:if(pb==null){pb=$('body').playblack();}">
+<br>current player properties dump:
+<input type="button" value="UPDATE" onclick="javascript:update_props();">
+<input type="button" value="auto (every 100ms)" onclick="javascript:start_update();">
+<input type="button" value="auto off" onclick="javascript:stop_update();">
+</div>
+<div class="code"><pre id="object_dump">(n/a)</pre></div>
+</body>
+</html>
