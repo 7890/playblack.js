@@ -196,7 +196,10 @@ stylesheet for 'playblack' (sticky html5 audio player)
 	cursor: text;
 }
 
-.pb_load_region_container {
+.pb_load_region_container_1 {
+}
+
+.pb_load_region_container_2 {
 }
 
 .pb_load_region {

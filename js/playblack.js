@@ -13,10 +13,7 @@ $.fn.playblack=function(id)
 
 	var _clog=function(msg)
 	{
-		if(pb_console_log)
-		{
-			console.log(msg);
-		}
+		if(pb_console_log) {console.log(msg);}
 	}
 
 	_clog("adding playblack function");
@@ -65,14 +62,8 @@ $.fn.playblack=function(id)
 	var params={};
 
 	var player_id;
-	if(id != undefined && id != null)
-	{
-		player_id=id; //function arg
-	}
-	else
-	{
-		player_id="pb_"+new Date().getTime();
-	}
+	if(id != undefined && id != null) {player_id=id; /*function arg*/}
+	else {player_id="pb_"+new Date().getTime();}
 
 	_clog("player_id: "+player_id);
 
@@ -100,7 +91,8 @@ $.fn.playblack=function(id)
 	var wave_img;
 	var info_div;
 	var mouse_nav_div;
-	var load_region_container_div;
+	var load_region_container_1_div;
+	var load_region_container_2_div;
 	var delay_page_end_div;
 	var em_pixel_div;
 	var em_pixel_time_div;
@@ -125,7 +117,11 @@ $.fn.playblack=function(id)
 	var is_playing;
 	var is_seeking;
 
+	var full_buffer_drawn; //once drawn, don't redraw buffer load regions
+	var load_region_container_toggle=0; //alternate div to prevent flicker (draw to n%2 then remove n+1%2)
+
 	var last_clientx; //mouse X position relative to browser window
+	var last_touch_clientx; //touch X position relative to browser window
 
 	var em_pixel; //height in px of title font
 	var em_pixel_time; //height in px of time font
@@ -151,7 +147,11 @@ $.fn.playblack=function(id)
 		is_playing=false;
 		is_seeking=false;
 
+		full_buffer_drawn=false;
+		load_region_container_toggle=0;
+
 		last_clientx=0;
+		last_touch_clientx=0;
 
 		em_pixel=16;
 		em_pixel_time=12;
@@ -183,7 +183,8 @@ $.fn.playblack=function(id)
 		wave_img=               player_div.find(".pb_wave_image");
 		info_div=               player_div.find(".pb_info_over");
 		mouse_nav_div=          player_div.find(".pb_mouse_nav_area");
-		load_region_container_div=player_div.find(".pb_load_region_container");
+		load_region_container_1_div=player_div.find(".pb_load_region_container_1");
+		load_region_container_2_div=player_div.find(".pb_load_region_container_2");
 
 		em_pixel_div=           player_div.find(".pb_em_pixel");
 		em_pixel_time_div=      player_div.find(".pb_em_pixel_time");
@@ -198,6 +199,9 @@ $.fn.playblack=function(id)
 		em_pixel_time=em_pixel_time_div.height();
 		_clog("TITLE 1.0em: "+em_pixel);
 		_clog("TIME 1.0em: "+em_pixel_time);
+
+		em_pixel_div.remove();
+		em_pixel_time_div.remove();
 	}; /*end init_variables()*/
 
 //=============================================================================
@@ -237,11 +241,9 @@ $.fn.playblack=function(id)
 
 		mouse_nav_div.on("mousemove", function(event)
 		{
-			if(mouse_button_down)
-			{
-				mouse_drag=true;
-			}
+			if(mouse_button_down) {mouse_drag=true;}
 			last_clientx=event.clientX;
+
 			if(!can_play){return;}
 			if(audio_ctx.duration=="Infinity"){return;}
 			nav_div.css({"display":"inline-block"});
@@ -251,10 +253,7 @@ $.fn.playblack=function(id)
 			{
 				//seek to dragged mouse position
 				audio_ctx.currentTime=mouse_position_s;
-				if(params.navplay)
-				{
-					play();
-				}
+				if(params.navplay) {play();}
 			}
 		});
 
@@ -267,10 +266,7 @@ $.fn.playblack=function(id)
 			//possibly a live stream
 			if(audio_ctx.duration=="Infinity"){return;}
 			audio_ctx.currentTime=mouse_position_s;
-			if(params.navplay)
-			{
-				play();
-			}
+			if(params.navplay) {play();}
 		});
 
 		mouse_nav_div.on("mouseup", function(event)
@@ -297,6 +293,41 @@ $.fn.playblack=function(id)
 		{
 			_clog("pause clicked");
 			pause();
+		});
+
+		//touch events
+		mouse_nav_div.on("touchstart", function(event)
+		{
+			_clog("touchstart");
+			//"simulate" mouse
+			mouse_button_down=true;
+			last_touch_clientx=event.originalEvent.touches[0].clientX;
+		});
+
+		mouse_nav_div.on("touchmove", function(event)
+		{
+			_clog("touchmove");
+			last_touch_clientx=event.originalEvent.touches[0].clientX;
+			//"simulate" mouse
+			mouse_nav_div.trigger("mousemove");
+			//don't scroll page when dragging on player progress agrea
+			return false;
+		});
+
+		mouse_nav_div.on("touchend", function(event)
+		{
+			_clog("touchend");
+			//"simulate" mouse
+			mouse_button_down=false;
+			last_touch_clientx=event.originalEvent.touches[0].clientX;
+		});
+
+		//don't scroll page when dragging on player cover, play/pause button
+		left_section_div.on("touchmove", function(event)
+		{
+			//Returning false from an event handler will automatically 
+			//call event.stopPropagation() and event.preventDefault()
+			return false;
 		});
 	}; /*end attach_listeners()*/
 /*
@@ -330,6 +361,7 @@ $.fn.playblack=function(id)
 			can_play_through=false;
 			is_playing=false;
 			is_seeking=false;
+			full_buffer_drawn=false;
 		});
 
 		audio_ctx.addEventListener("durationchange", function()
@@ -416,10 +448,7 @@ $.fn.playblack=function(id)
 			is_playing=false;
 			//make sure to get the last bit of time
 			update_display();
-			if(can_play)
-			{
-				button_play_img.css({"display":"inline-block"});
-			}
+			if(can_play) {button_play_img.css({"display":"inline-block"});}
 			button_pause_img.css({"display":"none"});
 		});
 
@@ -465,6 +494,7 @@ $.fn.playblack=function(id)
 			can_play_through=false;
 			is_playing=false;
 			is_seeking=false;
+			full_buffer_drawn=false;
 
 			var msg="An unknown error occurred.";
 
@@ -489,10 +519,7 @@ $.fn.playblack=function(id)
 			display_error(msg);
 		}, true);
 
-		if(callbacks[CB_ERROR]!=undefined)
-		{
-			callbacks[CB_ERROR](thispb);
-		}
+		if(callbacks[CB_ERROR]!=undefined) {callbacks[CB_ERROR](thispb);}
 	}; /*end init_audio_context()*/
 
 //=============================================================================
@@ -508,7 +535,9 @@ $.fn.playblack=function(id)
 		delay_page_end_div.css({"display":"none"});
 
 		progress_div.width(0);
-		load_region_container_div.remove();
+		load_region_container_1_div.remove();
+		load_region_container_2_div.remove();
+
 		title_div.html("");
 	};
 
@@ -538,6 +567,7 @@ $.fn.playblack=function(id)
 		can_play_through=false;
 		is_playing=false;
 		is_seeking=false;
+		full_buffer_drawn=false;
 
 		duration=0;
 		current_time=0;
@@ -577,20 +607,10 @@ $.fn.playblack=function(id)
 	{
 		var t;
 
-		if(params.title == null)
-		{
-			t=get_filename_from_url(params.audio);
-		}
-		else
-		{
-			t=params.title;
-		}
+		if(params.title == null) {t=get_filename_from_url(params.audio);}
+		else {t=params.title;}
 
-		if(params.show_url)
-		{
-			t+=' <a href="'+params.audio+'" target="_blank">'+params.audio+'</a>';
-		}
-
+		if(params.show_url) {t+=' <a href="'+params.audio+'" target="_blank">'+params.audio+'</a>';}
 		title_div.html("<span>"+t+"</span>");
 	};
 
@@ -610,10 +630,7 @@ $.fn.playblack=function(id)
 				b.length==1
 				&& b.end(0)==duration
 				&& b.start(0)==0
-			)
-			{
-				display_load_regions();
-			}
+			) {display_load_regions();}
 		}
 	};
 
@@ -622,10 +639,7 @@ $.fn.playblack=function(id)
 		if(audio_ctx==undefined || audio_ctx==null){return 0;}
 		var r=audio_ctx.buffered;
 		var s=0;
-		for(var i=0;i<r.length;i++)
-		{
-			s+=r.end(i)-r.start(i);
-		}
+		for(var i=0;i<r.length;i++) {s+=r.end(i)-r.start(i);}
 		return s;
 	};
 
@@ -634,10 +648,7 @@ $.fn.playblack=function(id)
 		if(audio_ctx==undefined || audio_ctx==null){return 0;}
 		var r=audio_ctx.played;
 		var s=0;
-		for(var i=0;i<r.length;i++)
-		{
-			s+=r.end(i)-r.start(i);
-		}
+		for(var i=0;i<r.length;i++) {s+=r.end(i)-r.start(i);}
 		return s;
 	};
 
@@ -653,14 +664,8 @@ $.fn.playblack=function(id)
 			cover_img.css({"display":"inline-block"});
 		}
 
-		if(params.cover_link==null)
-		{
-			cover_a.attr("href", "javascript:void(0);" );
-		}
-		else
-		{
-			cover_a.attr("href", params.cover_link);
-		}
+		if(params.cover_link==null) {cover_a.attr("href", "javascript:void(0);");}
+		else {cover_a.attr("href", params.cover_link);}
 	};
 
 	var set_waveform_image=function()
@@ -730,29 +735,24 @@ $.fn.playblack=function(id)
 
 	var repeat=function(bool)
 	{
-		if(bool!=undefined)
-		{
-			params.repeat=bool;
-		}
+		if(bool!=undefined) {params.repeat=bool;}
 		return params.repeat;
 	};
 
 	var navplay=function(bool)
 	{
-		if(bool!=undefined)
-		{
-			params.navplay=bool;
-		}
+		if(bool!=undefined) {params.navplay=bool;}
 		return params.navplay;
 	};
 
+/*
+On iOS devices, the audio level is always under the user’s physical control. 
+The volume property is not settable in JavaScript. Reading the volume property always returns 1.
+*/
 	var volume=function(vol) //fraction 0..1
 	{
 		if(audio_ctx==undefined || audio_ctx==null){return;}
-		if(vol!=undefined && vol>=0 && vol<=1)
-		{
-			audio_ctx.volume=vol;
-		}
+		if(vol!=undefined && vol>=0 && vol<=1) {audio_ctx.volume=vol;}
 		return audio_ctx.volume;
 	};
 
@@ -762,7 +762,10 @@ $.fn.playblack=function(id)
 		if(val!=undefined && val>=0.5 && val<=4)
 		{
 			params.rate=val;
+			//let the player pick-up the new rate
+			pause();
 			audio_ctx.playbackRate=params.rate;
+			play();
 		}
 		return params.rate;
 	};
@@ -801,31 +804,19 @@ from libsndfile:
 		if(audio_ctx==undefined || audio_ctx==null || !track_loaded){return;}
 		if(time_s!=undefined)
 		{
-			if(whence==undefined)
-			{
-				whence=SEEK_SET;
-			}
+			if(whence==undefined) {whence=SEEK_SET;}
 			switch(whence)
 			{
 				case SEEK_SET:
-					if(time_s>=0 && time_s<=duration)
-					{
-						audio_ctx.currentTime=time_s;
-					}
+					if(time_s>=0 && time_s<=duration) {audio_ctx.currentTime=time_s;}
 					break;
 				case SEEK_CUR:
 					var to=time_s+audio_ctx.currentTime;
-					if(to>=0 && to<=duration )
-					{
-						audio_ctx.currentTime=to;
-					}
+					if(to>=0 && to<=duration) {audio_ctx.currentTime=to;}
 					break;
 				case SEEK_END:
 					var to=time_s+audio_ctx.duration;
-					if(to>=0 && to<=duration )
-					{
-						audio_ctx.currentTime=to;
-					}
+					if(to>=0 && to<=duration) {audio_ctx.currentTime=to;}
 					break;
 				default:
 			}
@@ -869,6 +860,7 @@ from libsndfile:
 		can_play_through=false;
 		is_playing=false;
 		is_seeking=false;
+		full_buffer_drawn=false;
 
 		duration=0;
 		current_time=0;
@@ -885,24 +877,15 @@ from libsndfile:
 		switch(cb_type)
 		{
 			case CB_LOADED:
-				if(cb!=undefined)
-				{
-					callbacks[CB_LOADED]=cb;
-				}
+				if(cb!=undefined) {callbacks[CB_LOADED]=cb;}
 				return callbacks[CB_LOADED];
 				break;
 			case CB_ERROR:
-				if(cb!=undefined)
-				{
-					callbacks[CB_ERROR]=cb;
-				}
+				if(cb!=undefined) {callbacks[CB_ERROR]=cb;}
 				return callbacks[CB_ERROR];
 				break;
 			case CB_END:
-				if(cb!=undefined)
-				{
-					callbacks[CB_END]=cb;
-				}
+				if(cb!=undefined) {callbacks[CB_END]=cb;}
 				return callbacks[CB_END];
 				break;
 			default:
@@ -917,10 +900,7 @@ from libsndfile:
 
 	var set_bottom_offset=function(val)
 	{
-		if(val!=undefined)
-		{
-			player_div.css({"bottom":val});
-		}
+		if(val!=undefined) {player_div.css({"bottom":val});}
 		return parseInt(player_div.css("bottom"), 10); //remove unit
 	};
 
@@ -958,10 +938,7 @@ from libsndfile:
 	//most dimensions are derived from edge_length
 	var set_block_size=function(edge_length)
 	{
-		if(edge_length==undefined)
-		{
-			return block_size;
-		}
+		if(edge_length==undefined) {return block_size;}
 		block_size=edge_length;
 
 		player_div.css({"height": (block_size)+"px"});
@@ -973,13 +950,15 @@ from libsndfile:
 		button_play_img.css({"width": (block_size-4)+"px", "height": (block_size-4)+"px"});
 		button_pause_img.css({"width": (block_size-4)+"px", "height": (block_size-4)+"px"});
 
-		time_mousepos_div.css({"left": (2*block_size)+"px", "margin-top": (block_size - 1.5*em_pixel_time)+"px"});
 		progress_div.css({"left": (2*block_size)+"px", "height": block_size+"px"});
 		nav_div.css({"left": (2*block_size)+"px", "height": block_size+"px"});
 		wave_img.css({"left": (2*block_size)+"px"});
 		info_div.css({"left": (2*block_size)+"px", "height": block_size+"px"});
 
 		mouse_nav_div.css({"left": (2*block_size)+"px", "height": block_size+"px"});
+
+		time_and_status_div.css({"left": (2*block_size)+"px"});
+		time_mousepos_div.css({"left": (2*block_size)+"px", "margin-top": (block_size - 1.5*em_pixel_time)+"px"});
 
 		delay_page_end_div.css({"height": get_height()+"px"});
 
@@ -990,10 +969,7 @@ from libsndfile:
 
 	var seconds_to_pixels=function(sec)
 	{
-		if(duration<=0 || sec <=0)
-		{
-			return 2*block_size;
-		}
+		if(duration<=0 || sec <=0) {return 2*block_size;}
 		var f=sec/duration;
 		return 2*block_size + ($(window).width()-2*block_size) * f;
 	};
@@ -1005,10 +981,12 @@ from libsndfile:
 			params.bufreg=bool;
 			if(!params.bufreg)
 			{
-				load_region_container_div.remove();
+				load_region_container_1_div.remove();
+				load_region_container_2_div.remove();
 			}
 			else
 			{
+				full_buffer_drawn=false;
 				display_load_regions();
 			}
 		}
@@ -1018,18 +996,28 @@ from libsndfile:
 	//show info about load progress
 	var display_load_regions=function()
 	{
-		if(audio_ctx==undefined || audio_ctx==null || !params.bufreg)
-		{
-			return;
-		}
+		if(audio_ctx==undefined || audio_ctx==null || !params.bufreg || full_buffer_drawn) {return;}
 //		_clog("progress");
+
+		//alternate div to draw to: draw on new, keep old visible, then remove old
+		var cn;
+		if(load_region_container_toggle%2==0) {cn=1;}
+		else {cn=2;}
+		if(cn==1)
+		{
+			load_region_container_1_div.remove();
+			load_region_container_1_div=$('<div class="pb_load_region_container_1"></div>');
+			progress_container_div.append(load_region_container_1_div);
+		}
+		else
+		{
+			load_region_container_2_div.remove();
+			load_region_container_2_div=$('<div class="pb_load_region_container_2"></div>');
+			progress_container_div.append(load_region_container_2_div);
+		}
 
 		var b=audio_ctx.buffered; //object containing all ranges
 		_clog("load region count: "+b.length);
-
-		load_region_container_div.remove();
-		load_region_container_div=$('<div class="pb_load_region_container"></div>');
-		progress_container_div.append(load_region_container_div);
 
 		for(var i=0;i<b.length;i++)
 		{
@@ -1039,16 +1027,23 @@ from libsndfile:
 
 			var child = $('<div class="pb_load_region" id="pb_lr_'+i+'"></div>');
 			child.css({"left":start_pixel, "width":(end_pixel-start_pixel), "margin-top":(block_size-load_region_height)+"px"});
-			load_region_container_div.append(child);
+
+			if(cn==1) {load_region_container_1_div.append(child);}
+			else {load_region_container_2_div.append(child);}
 		}
 
 		//if one region covers the whole file -> 100% buffered
-		if(b.length>=1 && b.start(0)==0 && b.end(0)==duration)
+		if(b.length>=1 && b.start(0)==0 && b.end(0)==duration && b.end(0)>0)
 		{
 			can_play_through=true;
+			full_buffer_drawn=true;
 			child.css({"background":"rgba(0,255,0,0.6)"});
 		}
 
+		if(cn==1) {load_region_container_2_div.remove();}
+		else {load_region_container_1_div.remove();}
+
+		load_region_container_toggle++;
 	}; /*end display_load_regions()*/
 
 	var set_play_progress=function()
@@ -1059,6 +1054,8 @@ from libsndfile:
 
 	var set_mouse_cursor=function()
 	{
+		//if touch (start, move, end) x coordinate is available, use it
+		if(last_touch_clientx>0) {last_clientx=last_touch_clientx;}
 //		_clog("set_mouse_cursor()");
 		if(last_clientx<2*block_size){return;}
 		//total window width minus 2 blocks (cover, button)
@@ -1077,14 +1074,8 @@ from libsndfile:
 		//position the mouse cursor time (12:34) container
 		var dw=time_mousepos_div.width()+2*5;
 		var left;
-		if(m<=dw)
-		{
-			left=2*block_size;
-		}
-		else
-		{
-			left=last_clientx-dw;
-		}
+		if(m<=dw) {left=2*block_size;}
+		else {left=last_clientx-dw;}
 		time_mousepos_div.css({"left": left});
 	};/*end set_mouse_cursor()*/
 
@@ -1121,10 +1112,7 @@ from libsndfile:
 			cut_length=5;
 		}
 		//else hh:mm:ss
-		if(!isNaN(date.getTime()))
-		{
-			return date.toISOString().substr(cut_start, cut_length);
-		}
+		if(!isNaN(date.getTime())) {return date.toISOString().substr(cut_start, cut_length);}
 		return sec;
 	}; /*end format_seconds*/
 
@@ -1155,7 +1143,8 @@ from libsndfile:
 		<div class="pb_time_mouse_position pb_time pb_font pb_time_fs"></div>\
 		<div class="pb_info_over pb_font pb_info_fs"></div>\
 		<div class="pb_mouse_nav_area"></div>\
-		<div class="pb_load_region_container"></div>\
+		<div class="pb_load_region_container_1"></div>\
+		<div class="pb_load_region_container_2"></div>\
 	</div>\
 	<div class="pb_em pb_em_pixel pb_font pb_title_fs"></div>\
 	<div class="pb_em pb_em_pixel_time pb_font pb_time_fs"></div>\
@@ -1168,17 +1157,16 @@ from libsndfile:
 
 	$(window).on("resize", function()
 	{
-		if(player_div==undefined)
-		{
-			//elements are not yet initialized
-			return;
-		}
+		//if elements are not yet initialized
+		if(player_div==undefined) {return;}
 
 		wave_img.width(($(window).width()-2*block_size)+"px");
 		wave_img.height(block_size+"px");
 		info_div.width(($(window).width()-2*block_size)+"px");
-		set_play_progress();
+
+		full_buffer_drawn=false;
 		display_load_regions();
+		update_display();
 	});
 
 //=============================================================================
