@@ -1121,8 +1121,8 @@ from libsndfile:
 	var create_html=function()
 	{
 		var html='<div class="pb_delay_page_end" id="'+player_id+'_page_end"></div>\
+<audio id="'+player_id+'_audio"></audio>\
 <div class="pb_container" id="'+player_id+'">\
-	<audio id="'+player_id+'_audio"></audio>\
 	<div class="pb_title pb_font pb_title_fs"></div>\
 	<div class="pb_left_section">\
 		<div class="pb_cover_container noselect">\
