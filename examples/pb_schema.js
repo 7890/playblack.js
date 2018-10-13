@@ -10,7 +10,7 @@ return {
 			"audio": {
 				"type": "string",
 				"description": "url to audio file. this is the only MANDATORY property for a playitem.",
-				"default": "https://archive.org/download/testmp3testfile/mpthreetest.mp3"
+				"default": "https://archive.org/download/1HourWorkoutMusic61MB/-%2B%201%20hour%20workout%20music%20%2861MB%29.mp3"
 			},
 			"title": {
 				"type": "string",
