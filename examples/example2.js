@@ -31,8 +31,8 @@ update_props=function()
 	else
 	{
 		$("#object_dump").html(
-			new Date().getTime()+"\n"
-			+JSON.stringify(pb.props(), null, 4) //4 spaces indent
+/*			new Date().getTime()+"\n"*/
+			""+JSON.stringify(pb.props(), null, 4) //4 spaces indent
 		);
 	}
 }

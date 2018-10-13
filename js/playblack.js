@@ -61,9 +61,11 @@ $.fn.playblack=function(id)
 	//filled and merged with user params in load()
 	var params={};
 
+	var pb_creation_time=new Date().getTime();
+
 	var player_id;
 	if(id != undefined && id != null) {player_id=id; /*function arg*/}
-	else {player_id="pb_"+new Date().getTime();}
+	else {player_id="pb_"+pb_creation_time;}
 
 	_clog("player_id: "+player_id);
 
@@ -118,6 +120,8 @@ $.fn.playblack=function(id)
 	var is_playing;
 	var is_seeking;
 
+	var pb_load_call_time;
+
 	var full_buffer_drawn; //once drawn, don't redraw buffer load regions
 	var load_region_container_toggle=0; //alternate div to prevent flicker (draw to n%2 then remove n+1%2)
 
@@ -147,6 +151,8 @@ $.fn.playblack=function(id)
 		can_play_through=false;
 		is_playing=false;
 		is_seeking=false;
+
+		pb_load_call_time=0;
 
 		full_buffer_drawn=false;
 		load_region_container_toggle=0;
@@ -386,6 +392,7 @@ $.fn.playblack=function(id)
 			is_playing=false;
 			is_seeking=false;
 			full_buffer_drawn=false;
+			pb_load_call_time=new Date().getTime();
 		});
 
 		audio_ctx.addEventListener("durationchange", function()
@@ -599,6 +606,9 @@ $.fn.playblack=function(id)
 
 		duration=0;
 		current_time=0;
+
+		last_error='';
+
 		reset_elements();
 		time_and_status_div.html("Loading...");
 
@@ -653,12 +663,14 @@ $.fn.playblack=function(id)
 		set_mouse_cursor();
 		if(params.bufreg)
 		{
-			var b=audio_ctx.buffered;
+/*			var b=audio_ctx.buffered;
 			if(
 				b.length==1
 				&& b.end(0)==duration
 				&& b.start(0)==0
 			) {display_load_regions();}
+*/
+			display_load_regions();
 		}
 	};
 
@@ -954,6 +966,9 @@ from libsndfile:
 			, "height":            get_height()
 			, "bottom":            set_bottom_offset()
 			, "last_error":        last_error
+			, "props_clone_time":  new Date().getTime()
+			, "creation_time":     pb_creation_time
+			, "last_load_time":    pb_load_call_time
 		}, params);
 	};
 
