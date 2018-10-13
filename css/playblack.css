@@ -228,6 +228,9 @@ stylesheet for 'playblack' (sticky html5 audio player)
 	padding: 0;
 }
 
+.pb_status_busy {
+}
+
 .noselect {
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;

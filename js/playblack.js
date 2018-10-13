@@ -83,6 +83,7 @@ $.fn.playblack=function(id)
 	var button_div;
 	var button_play_img;
 	var button_pause_img;
+	var busy_img;
 	var time_and_status_div;
 	var time_mousepos_div;
 	var progress_container_div;
@@ -159,7 +160,8 @@ $.fn.playblack=function(id)
 		last_error="none";
 
 		//"normal" javascript element, non-jquery 
-		audio_ctx=document.getElementById(player_id+"_audio");
+		audio_ctx=document.createElement("audio");
+		audio_ctx.setAttribute("id", player_id+"_audio");
 
 		//link variables to DOM elements
 		player_div=             $("#"+player_id);
@@ -172,6 +174,7 @@ $.fn.playblack=function(id)
 		button_div=             player_div.find(".pb_button_container");
 		button_play_img=        player_div.find(".pb_button_play");
 		button_pause_img=       player_div.find(".pb_button_pause");
+		busy_img=               player_div.find(".pb_status_busy");
 
 		time_and_status_div=    player_div.find(".pb_time_and_status");
 		time_mousepos_div=      player_div.find(".pb_time_mouse_position");
@@ -213,6 +216,7 @@ $.fn.playblack=function(id)
 		cover_a.on("dragstart", function(event) {event.preventDefault(); });
 		button_play_img.on("dragstart", function(event) {event.preventDefault();});
 		button_pause_img.on("dragstart", function(event) {event.preventDefault();});
+		busy_img.on("dragstart", function(event) {event.preventDefault();});
 		wave_img.on("dragstart", function(event) {event.preventDefault();});
 
 		//mouse_nav_div is the main area of the player capturing mouse events
@@ -239,22 +243,30 @@ $.fn.playblack=function(id)
 			mouse_drag=false;
 		});
 
+		var mousemove_action_delay_function;
 		mouse_nav_div.on("mousemove", function(event)
 		{
 			if(mouse_button_down) {mouse_drag=true;}
 			last_clientx=event.clientX;
-
 			if(!can_play){return;}
 			if(audio_ctx.duration=="Infinity"){return;}
 			nav_div.css({"display":"inline-block"});
 			time_mousepos_div.css({"display":"inline-block"});
 			set_mouse_cursor();
-			if(mouse_drag)
+
+			//throttle possible drag seek if can not play through
+			var wait_ms=0;
+			if(!can_play_through){wait_ms=100;}
+			clearTimeout(mousemove_action_delay_function);
+			mousemove_action_delay_function=setTimeout(function()
 			{
-				//seek to dragged mouse position
-				audio_ctx.currentTime=mouse_position_s;
-				if(params.navplay) {play();}
-			}
+				if(mouse_drag)
+				{
+					//seek to dragged mouse position
+					audio_ctx.currentTime=mouse_position_s;
+					if(params.navplay) {play();}
+				}
+			}, wait_ms); //ms
 		});
 
 		mouse_nav_div.on("mousedown", function(event)
@@ -279,7 +291,7 @@ $.fn.playblack=function(id)
 			else
 			{
 				_clog("mouseup (end of drag)");
-				mouse_drag=0;
+				mouse_drag=false;
 			}
 		});
 
@@ -299,9 +311,16 @@ $.fn.playblack=function(id)
 		mouse_nav_div.on("touchstart", function(event)
 		{
 			_clog("touchstart");
-			//"simulate" mouse
-			mouse_button_down=true;
 			last_touch_clientx=event.originalEvent.touches[0].clientX;
+			mouse_inside=true;
+			mouse_drag=false;
+			mouse_button_down=true;
+			if(!can_play){return;}
+			if(audio_ctx.duration=="Infinity"){return;}
+			set_mouse_cursor();
+			audio_ctx.currentTime=mouse_position_s;
+			if(params.navplay) {play();}
+			return false;
 		});
 
 		mouse_nav_div.on("touchmove", function(event)
@@ -317,9 +336,14 @@ $.fn.playblack=function(id)
 		mouse_nav_div.on("touchend", function(event)
 		{
 			_clog("touchend");
-			//"simulate" mouse
+			last_touch_clientx=0;
 			mouse_button_down=false;
-			last_touch_clientx=event.originalEvent.touches[0].clientX;
+			mouse_drag=false;
+			mouse_inside=false;
+			//hide mouse navigation cursor
+			nav_div.css({"display":"none"});
+			time_mousepos_div.css({"display":"none"});
+			return false;
 		});
 
 		//don't scroll page when dragging on player cover, play/pause button
@@ -410,6 +434,7 @@ $.fn.playblack=function(id)
 			update_display();
 			button_play_img.css({"display":"inline-block"});
 			button_pause_img.css({"display":"none"});
+			busy_img.css({"display":"none"});
 		});
 
 		audio_ctx.addEventListener("canplaythrough", function()
@@ -425,6 +450,7 @@ $.fn.playblack=function(id)
 
 			button_play_img.css({"display":"none"});
 			button_pause_img.css({"display":"inline-block"});
+			busy_img.css({"display":"none"});
 		});
 
 		audio_ctx.addEventListener("seeking", function()
@@ -450,6 +476,7 @@ $.fn.playblack=function(id)
 			update_display();
 			if(can_play) {button_play_img.css({"display":"inline-block"});}
 			button_pause_img.css({"display":"none"});
+			busy_img.css({"display":"none"});
 		});
 
 		audio_ctx.addEventListener("volumechange", function()
@@ -527,6 +554,7 @@ $.fn.playblack=function(id)
 	{
 		button_play_img.css({"display":"none"});
 		button_pause_img.css({"display":"none"});
+		busy_img.css({"display":"inline-block"});
 		info_div.css({"display":"none"});
 		cover_div.css({"display":"none"});
 		wave_img.css({"display":"none"});
@@ -698,8 +726,8 @@ $.fn.playblack=function(id)
 	{
 		button_play_img.css({"display":"none"});
 		button_pause_img.css({"display":"none"});
-
-		var w=$(window).width()-2*block_size;
+		busy_img.css({"display":"none"});
+		var w=$(window).width()-block_size;
 		info_div.html(HTML_WARN_PREFIX+message);
 		info_div.css({"width":w+"px", "display":"block"});
 	};
@@ -746,7 +774,7 @@ $.fn.playblack=function(id)
 	};
 
 /*
-On iOS devices, the audio level is always under the user’s physical control. 
+On iOS devices, the audio level is always under the user's physical control. 
 The volume property is not settable in JavaScript. Reading the volume property always returns 1.
 */
 	var volume=function(vol) //fraction 0..1
@@ -949,16 +977,25 @@ from libsndfile:
 		button_div.css({"width": block_size+"px", "height": block_size+"px"});
 		button_play_img.css({"width": (block_size-4)+"px", "height": (block_size-4)+"px"});
 		button_pause_img.css({"width": (block_size-4)+"px", "height": (block_size-4)+"px"});
+		busy_img.css({"width": (block_size-4)+"px", "height": (block_size-4)+"px"});
 
 		progress_div.css({"left": (2*block_size)+"px", "height": block_size+"px"});
 		nav_div.css({"left": (2*block_size)+"px", "height": block_size+"px"});
 		wave_img.css({"left": (2*block_size)+"px"});
-		info_div.css({"left": (2*block_size)+"px", "height": block_size+"px"});
-
+		info_div.css({"left": (block_size)+"px", "height": block_size+"px"});
 		mouse_nav_div.css({"left": (2*block_size)+"px", "height": block_size+"px"});
-
 		time_and_status_div.css({"left": (2*block_size)+"px"});
-		time_mousepos_div.css({"left": (2*block_size)+"px", "margin-top": (block_size - 1.5*em_pixel_time)+"px"});
+
+		//if used on a touchscreen, show drag position above
+//		if (typeof window.orientation !== 'undefined')
+		if ('ontouchstart' in window)
+		{
+			time_mousepos_div.css({"left": (2*block_size)+"px", "margin-top": (-1.5*em_pixel_time)+"px"});
+		}
+		else
+		{
+			time_mousepos_div.css({"left": (2*block_size)+"px", "margin-top": (block_size - 1.5*em_pixel_time)+"px"});
+		}
 
 		delay_page_end_div.css({"height": get_height()+"px"});
 
@@ -1113,7 +1150,7 @@ from libsndfile:
 		}
 		//else hh:mm:ss
 		if(!isNaN(date.getTime())) {return date.toISOString().substr(cut_start, cut_length);}
-		return sec;
+		else {return new Date(null).toISOString().substr(cut_start, cut_length);}
 	}; /*end format_seconds*/
 
 //=============================================================================
@@ -1121,7 +1158,6 @@ from libsndfile:
 	var create_html=function()
 	{
 		var html='<div class="pb_delay_page_end" id="'+player_id+'_page_end"></div>\
-<audio id="'+player_id+'_audio"></audio>\
 <div class="pb_container" id="'+player_id+'">\
 	<div class="pb_title pb_font pb_title_fs"></div>\
 	<div class="pb_left_section">\
@@ -1133,6 +1169,7 @@ from libsndfile:
 		<div class="pb_button_container noselect">\
 			<img class="pb_button_image pb_button_play" src="../img/drawing_button_play.svg"></img>\
 			<img class="pb_button_image pb_button_pause" src="../img/drawing_button_pause.svg"></img>\
+<img class="pb_button_image pb_status_busy" src="../img/loader-02.gif"></img>\
 		</div>\
 	</div>\
 	<img class="pb_wave_image noselect"></img>\
@@ -1162,7 +1199,7 @@ from libsndfile:
 
 		wave_img.width(($(window).width()-2*block_size)+"px");
 		wave_img.height(block_size+"px");
-		info_div.width(($(window).width()-2*block_size)+"px");
+		info_div.width(($(window).width()-block_size)+"px");
 
 		full_buffer_drawn=false;
 		display_load_regions();
