@@ -23,7 +23,7 @@ $.fn.playblack=function(id)
 	var PB_DEFAULT_BLOCK_SIZE=80;
 	var left_off=0; //set in set_block_size()
 	var load_region_height=7;
-	var pos_poller; //interval set in "loadeddata" handler
+	var progress_poller; //interval set in "loadeddata" handler
 	var poll_ms=50; //if duration < 60 sec
 
 	// /!\ utf-8 char
@@ -48,7 +48,7 @@ $.fn.playblack=function(id)
 		, "title":        null  //text or html (artist, song title, ...)
 		, "cover":        null  //url to cover image
 		, "cover_link":   null  //href for cover image (best displayed if image has quadratic dimensions)
-		, "waveform":     null  //url to waveform image (a wide image, for instance 1000x200, transparent background, bright waveform)
+		, "wave":         null  //url to waveform image (a wide image, for instance 1000x200, transparent background, bright waveform)
 		, "repeat":       false //bool: if true, repeat track play
 		, "autoplay":     true  //bool: if true, start playback when ready
 		, "navplay":      true  //bool: if true, start playback on clicks and drags even if paused
@@ -58,9 +58,9 @@ $.fn.playblack=function(id)
 		, "show_url":     false //bool: if true, add audio url as <a> link to title 
 		, "bufreg":       true  //bool: if true, show buffered (loaded) regions
 		, "hidden":       false //bool: if true, hide player
-		, "show_cover": true //bool
+		, "show_cover":   true //bool
 		, "show_buttons": true //bool
-		, "size": PB_DEFAULT_BLOCK_SIZE //int: block size
+		, "size":         PB_DEFAULT_BLOCK_SIZE //int: block size
 	};
 
 	//filled and merged with user params in load()
@@ -623,6 +623,10 @@ $.fn.playblack=function(id)
 
 		if(params.hidden){hide();}
 
+		set_block_size(params.size);
+		reset_elements();
+		time_and_status_div.html("Loading...");
+
 		if(!playitem.audio || playitem.audio==undefined)
 		{
 			display_error("Error in load(): 'audio' property was undefined.");
@@ -630,9 +634,6 @@ $.fn.playblack=function(id)
 			return;
 		}
 
-		set_block_size(params.size);
-		reset_elements();
-		time_and_status_div.html("Loading...");
 		set_title();
 		set_cover();
 		set_waveform_image();
@@ -988,12 +989,11 @@ from libsndfile:
 		if(edge_length==undefined) {return params.size;}
 		params.size=edge_length;
 
+		player_div.css({"height": (params.size)+"px"});
+
 		left_off=0;
 		if(params.show_cover){left_off+=params.size;}
 		if(params.show_buttons){left_off+=params.size;}
-
-		player_div.css({"height": (params.size)+"px"});
-
 		left_section_div.css({"width": (left_off)+"px", "height": params.size+"px"});
 
 		var w=0;
@@ -1114,10 +1114,10 @@ from libsndfile:
 
 	var create_position_poller=function()
 	{
-		clearInterval(pos_poller);
+		clearInterval(progress_poller);
 		if(duration>=60){return;}
 
-		pos_poller=setInterval(function()
+		progress_poller=setInterval(function()
 		{
 			if(is_playing)
 			{
