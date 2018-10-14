@@ -42,7 +42,7 @@ return {
 				"type": "boolean",
 				"format": "checkbox",
 				"description": "if true, start playback after track has loaded",
-				"default": true
+				"default": false
 			},
 			"navplay": {
 				"type": "boolean",

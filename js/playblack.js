@@ -50,7 +50,7 @@ $.fn.playblack=function(id)
 		, "cover_link":   null  //href for cover image (best displayed if image has quadratic dimensions)
 		, "wave":         null  //url to waveform image (a wide image, for instance 1000x200, transparent background, bright waveform)
 		, "repeat":       false //bool: if true, repeat track play
-		, "autoplay":     true  //bool: if true, start playback when ready
+		, "autoplay":     false //bool: if true, start playback when ready
 		, "navplay":      true  //bool: if true, start playback on clicks and drags even if paused
 		, "seek":         0     //float 0... initial seek in seconds
 		, "volume":       1     //float 0..1: initial volume (0=mute, 1=100%)
@@ -58,8 +58,8 @@ $.fn.playblack=function(id)
 		, "show_url":     false //bool: if true, add audio url as <a> link to title 
 		, "bufreg":       true  //bool: if true, show buffered (loaded) regions
 		, "hidden":       false //bool: if true, hide player
-		, "show_cover":   true //bool
-		, "show_buttons": true //bool
+		, "show_cover":   true  //bool
+		, "show_buttons": true  //bool
 		, "size":         PB_DEFAULT_BLOCK_SIZE //int: block size
 	};
 
@@ -808,9 +808,16 @@ The volume property is not settable in JavaScript. Reading the volume property a
 		{
 			params.rate=val;
 			//let the player pick-up the new rate
-			pause();
-			audio_ctx.playbackRate=params.rate;
-			play();
+			if(is_playing)
+			{
+				pause();
+				audio_ctx.playbackRate=params.rate;
+				play();
+			}
+			else
+			{
+				audio_ctx.playbackRate=params.rate;
+			}
 		}
 		return params.rate;
 	};
