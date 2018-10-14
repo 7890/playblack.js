@@ -9,6 +9,7 @@ var update_props;
 var update_interval;
 var start_update;
 var stop_update;
+var cd_seek;
 
 $(document).ready(function(e) {
 //the editor allows to create playitem objects, to be used as arguments to load()
@@ -45,6 +46,20 @@ start_update=function()
 stop_update=function()
 {
 	clearInterval(update_interval);
+};
+
+var seek_interval;
+cd_seek=function(dir, set, fast)
+{
+	clearInterval(seek_interval);
+	if(set)
+	{
+		var sec=2;
+		sec*=dir; //dir: -1, +1
+		var iv=150;
+		if(fast){sec*=2; iv=100;}
+		seek_interval=setInterval(function(){pb.seek(sec, 1);}, iv);
+	}
 };
 
 $(document).keypress(function(e)

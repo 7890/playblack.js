@@ -36,6 +36,19 @@ load track using above JSON object
 <input type="button" value="-1 (relative)" onclick="javascript:pb.seek(-1,1);">
 <input type="button" value="+1 (relative)" onclick="javascript:pb.seek(1,1);">
 <input type="button" value="end -1 (relative)" onclick="javascript:pb.seek(-1,2);">
+<br>cd seek:
+<input type="button" value="hold/release <<<" 
+	onmousedown="javascript:cd_seek(-1, true, true);" 
+	onmouseup="javascript:cd_seek(-1, false);">
+<input type="button" value="hold/release <<" 
+	onmousedown="javascript:cd_seek(-1, true);" 
+	onmouseup="javascript:cd_seek(-1, false);">
+<input type="button" value="hold/release >>" 
+	onmousedown="javascript:cd_seek(1, true);" 
+	onmouseup="javascript:cd_seek(1, false);">
+<input type="button" value="hold/release >>>" 
+	onmousedown="javascript:cd_seek(1, true,true);" 
+	onmouseup="javascript:cd_seek(1, false);">
 <br>playback rate (same pitch):
 <input type="button" value="0.5" onclick="javascript:pb.rate(0.5);">
 <input type="button" value="1" onclick="javascript:pb.rate(1);">
@@ -43,6 +56,9 @@ load track using above JSON object
 <br>volume:
 <input type="button" value="mute" onclick="javascript:pb.mute();">
 <input type="button" value="unmute" onclick="javascript:pb.unmute();">
+<input id="vol" type="range" min="0" max="100" value="100"
+	oninput="javascript:pb.volume(this.value*0.01);" 
+	onchange="javascript:pb.volume(this.value*0.01);">
 <br>repeat:
 <input type="button" value="enable" onclick="javascript:pb.repeat(true);">
 <input type="button" value="disable" onclick="javascript:pb.repeat(false);">
