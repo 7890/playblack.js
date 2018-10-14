@@ -22,13 +22,11 @@ tracks.push({
 	, wave: "img/ya1.wav.png"
 	, hidden: true
 	, show_url: true
-	, autoplay: false
 });
 tracks.push({
 	audio: "audio/1.mp3"
 	, hidden: true
 	, show_url: true
-	, autoplay: false
 	, repeat: true
 });
 

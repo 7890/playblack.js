@@ -12,8 +12,6 @@ for(var i=0;i<tracks.length;i++)
 {
 	//add common / non-default properties to tracks
 	tracks[i].show_url=true;
-	tracks[i].autoplay=false;
-	tracks[i].repeat=false;
 }
 
 console.log("example4.js: create playblack instances");
