@@ -21,7 +21,7 @@ $.fn.playblack=function(id)
 	//the layout is largely based on PB_BLOCK_SIZE
 	//see set_block_size() to dynamically change it
 	var PB_DEFAULT_BLOCK_SIZE=80;
-	var block_size=PB_DEFAULT_BLOCK_SIZE;
+	var left_off=0; //set in set_block_size()
 	var load_region_height=7;
 
 	// /!\ utf-8 char
@@ -50,12 +50,15 @@ $.fn.playblack=function(id)
 		, "repeat":       false //bool: if true, repeat track play
 		, "autoplay":     true  //bool: if true, start playback when ready
 		, "navplay":      true  //bool: if true, start playback on clicks and drags even if paused
-		, "seek":         0     //initial seek in seconds
-		, "volume":       1     //0..1: initial volume (0=mute, 1=100%)
-		, "rate":         1     //0.5..4: initial playback rate (same pitch, different speed)
+		, "seek":         0     //float 0... initial seek in seconds
+		, "volume":       1     //float 0..1: initial volume (0=mute, 1=100%)
+		, "rate":         1     //float 0.5..4: initial playback rate (same pitch, different speed)
 		, "show_url":     false //bool: if true, add audio url as <a> link to title 
 		, "bufreg":       true  //bool: if true, show buffered (loaded) regions
 		, "hidden":       false //bool: if true, hide player
+		, "show_cover": true //bool
+		, "show_buttons": true //bool
+		, "size": PB_DEFAULT_BLOCK_SIZE //int: block size
 	};
 
 	//filled and merged with user params in load()
@@ -581,7 +584,7 @@ $.fn.playblack=function(id)
 	{
 		create_html();
 		init_variables();
-		set_block_size(block_size);
+		set_block_size(PB_DEFAULT_BLOCK_SIZE);
 		attach_listeners();
 		reset_elements();
 		init_audio_context();
@@ -609,9 +612,6 @@ $.fn.playblack=function(id)
 
 		last_error='';
 
-		reset_elements();
-		time_and_status_div.html("Loading...");
-
 		//clear
 		params={};
 		//fill with default values
@@ -628,6 +628,9 @@ $.fn.playblack=function(id)
 			return;
 		}
 
+		set_block_size(params.size);
+		reset_elements();
+		time_and_status_div.html("Loading...");
 		set_title();
 		set_cover();
 		set_waveform_image();
@@ -644,7 +647,6 @@ $.fn.playblack=function(id)
 	var set_title=function()
 	{
 		var t;
-
 		if(params.title == null) {t=get_filename_from_url(params.audio);}
 		else {t=params.title;}
 
@@ -739,7 +741,7 @@ $.fn.playblack=function(id)
 		button_play_img.css({"display":"none"});
 		button_pause_img.css({"display":"none"});
 		busy_img.css({"display":"none"});
-		var w=$(window).width()-block_size;
+		var w=$(window).width()-params.size;
 		info_div.html(HTML_WARN_PREFIX+message);
 		info_div.css({"width":w+"px", "display":"block"});
 	};
@@ -935,7 +937,7 @@ from libsndfile:
 
 	var get_height=function()
 	{
-		return block_size+title_div.height();
+		return params.size+title_div.height();
 	};
 
 	var set_bottom_offset=function(val)
@@ -981,49 +983,59 @@ from libsndfile:
 	//most dimensions are derived from edge_length
 	var set_block_size=function(edge_length)
 	{
-		if(edge_length==undefined) {return block_size;}
-		block_size=edge_length;
+		if(edge_length==undefined) {return params.size;}
+		params.size=edge_length;
 
-		player_div.css({"height": (block_size)+"px"});
+		left_off=0;
+		if(params.show_cover){left_off+=params.size;}
+		if(params.show_buttons){left_off+=params.size;}
 
-		left_section_div.css({"width": (2*block_size)+"px", "height": block_size+"px"});
-		cover_div.css({"width": block_size+"px", "height": block_size+"px"});
-		cover_img.css({"width": (block_size-4)+"px", "height": (block_size-4)+"px"});
-		button_div.css({"width": block_size+"px", "height": block_size+"px"});
-		button_play_img.css({"width": (block_size-4)+"px", "height": (block_size-4)+"px"});
-		button_pause_img.css({"width": (block_size-4)+"px", "height": (block_size-4)+"px"});
-		busy_img.css({"width": (block_size-4)+"px", "height": (block_size-4)+"px"});
+		player_div.css({"height": (params.size)+"px"});
 
-		progress_div.css({"left": (2*block_size)+"px", "height": block_size+"px"});
-		nav_div.css({"left": (2*block_size)+"px", "height": block_size+"px"});
-		wave_img.css({"left": (2*block_size)+"px"});
-		info_div.css({"left": (block_size)+"px", "height": block_size+"px"});
-		mouse_nav_div.css({"left": (2*block_size)+"px", "height": block_size+"px"});
-		time_and_status_div.css({"left": (2*block_size)+"px"});
+		left_section_div.css({"width": (left_off)+"px", "height": params.size+"px"});
+
+		var w=0;
+		if(params.show_cover){w+=params.size;}
+		cover_div.css({"width": w+"px", "height": params.size+"px"});
+		cover_img.css({"width": (w-4)+"px", "height": (params.size-4)+"px"});
+
+		w=0;
+		if(params.show_buttons){w+=params.size;}
+		button_div.css({"width": w+"px", "height": params.size+"px"});
+		button_play_img.css({"width": Math.max(0,w-4)+"px", "height": (params.size-4)+"px"});
+		button_pause_img.css({"width": Math.max(0,w-4)+"px", "height": (params.size-4)+"px"});
+		busy_img.css({"width": Math.max(0,w-4)+"px", "height": (params.size-4)+"px"});
+
+		progress_div.css({"left": (left_off)+"px", "height": params.size+"px"});
+		nav_div.css({"left": (left_off)+"px", "height": params.size+"px"});
+		wave_img.css({"left": (left_off)+"px"});
+		info_div.css({"left": (w)+"px", "height": params.size+"px"});
+		mouse_nav_div.css({"left": (left_off)+"px", "height": params.size+"px"});
+		time_and_status_div.css({"left": (left_off)+"px"});
 
 		//if used on a touchscreen, show drag position above
 //		if (typeof window.orientation !== 'undefined')
 		if ('ontouchstart' in window)
 		{
-			time_mousepos_div.css({"left": (2*block_size)+"px", "margin-top": (-1.5*em_pixel_time)+"px"});
+			time_mousepos_div.css({"left": (left_off)+"px", "margin-top": (-1.5*em_pixel_time)+"px"});
 		}
 		else
 		{
-			time_mousepos_div.css({"left": (2*block_size)+"px", "margin-top": (block_size - 1.5*em_pixel_time)+"px"});
+			time_mousepos_div.css({"left": (left_off)+"px", "margin-top": (params.size - 1.5*em_pixel_time)+"px"});
 		}
 
 		delay_page_end_div.css({"height": get_height()+"px"});
 
 		$(window).resize();
 
-		return block_size;
+		return params.size;
 	}; /*end set_block_size*/
 
 	var seconds_to_pixels=function(sec)
 	{
-		if(duration<=0 || sec <=0) {return 2*block_size;}
+		if(duration<=0 || sec <=0) {return left_off;}
 		var f=sec/duration;
-		return 2*block_size + ($(window).width()-2*block_size) * f;
+		return left_off + ($(window).width()-left_off) * f;
 	};
 
 	var bufreg=function(bool)
@@ -1078,7 +1090,7 @@ from libsndfile:
 //			_clog("range: "+i+" start: "+start_pixel+" end: "+end_pixel);
 
 			var child = $('<div class="pb_load_region" id="pb_lr_'+i+'"></div>');
-			child.css({"left":start_pixel, "width":(end_pixel-start_pixel), "margin-top":(block_size-load_region_height)+"px"});
+			child.css({"left":start_pixel, "width":(end_pixel-start_pixel), "margin-top":(params.size-load_region_height)+"px"});
 
 			if(cn==1) {load_region_container_1_div.append(child);}
 			else {load_region_container_2_div.append(child);}
@@ -1101,7 +1113,7 @@ from libsndfile:
 	var set_play_progress=function()
 	{
 		var f=current_time/duration;
-		progress_div.width((($(window).width()-2*block_size) * f) +"px");
+		progress_div.width((($(window).width()-left_off) * f) +"px");
 	};
 
 	var set_mouse_cursor=function()
@@ -1109,11 +1121,11 @@ from libsndfile:
 		//if touch (start, move, end) x coordinate is available, use it
 		if(last_touch_clientx>0) {last_clientx=last_touch_clientx;}
 //		_clog("set_mouse_cursor()");
-		if(last_clientx<2*block_size){return;}
+		if(last_clientx<left_off){return;}
 		//total window width minus 2 blocks (cover, button)
-		var w=$(window).width()-2*block_size;
+		var w=$(window).width()-left_off;
 		//mouse x position inside main area (waveform, progress, ...)
-		var m=last_clientx-2*block_size;
+		var m=last_clientx-left_off;
 		//mouse position inside track as a factor
 		var f=m/w;
 		mouse_position_s=duration * f;
@@ -1126,7 +1138,7 @@ from libsndfile:
 		//position the mouse cursor time (12:34) container
 		var dw=time_mousepos_div.width()+2*5;
 		var left;
-		if(m<=dw) {left=2*block_size;}
+		if(m<=dw) {left=left_off;}
 		else {left=last_clientx-dw;}
 		time_mousepos_div.css({"left": left});
 	};/*end set_mouse_cursor()*/
@@ -1212,9 +1224,9 @@ from libsndfile:
 		//if elements are not yet initialized
 		if(player_div==undefined) {return;}
 
-		wave_img.width(($(window).width()-2*block_size)+"px");
-		wave_img.height(block_size+"px");
-		info_div.width(($(window).width()-block_size)+"px");
+		wave_img.width(($(window).width()-left_off)+"px");
+		wave_img.height(params.size+"px");
+		info_div.width(($(window).width()-params.size)+"px");
 
 		full_buffer_drawn=false;
 		display_load_regions();

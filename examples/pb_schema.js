@@ -68,6 +68,24 @@ return {
 				"description": "if true, append audio file url to title.",
 				"default": false
 			},
+			"show_cover": {
+				"type": "boolean",
+				"format": "checkbox",
+				"description": "if true, display cover.",
+				"default": true
+			},
+			"show_buttons": {
+				"type": "boolean",
+				"format": "checkbox",
+				"description": "if true, display play/pause controls.",
+				"default": true
+			},
+			"size": {
+				"type": "number",
+				"description": "initial player size (block size)",
+				"default": 80,
+				"minimum": 20
+			},
 			"seek": {
 				"type": "number",
 				"description": "initial seek (seconds), fraction >=0, <=track duration",
