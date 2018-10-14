@@ -133,10 +133,12 @@ stylesheet for 'playblack' (sticky html5 audio player)
 }
 
 .pb_button_image:hover {
-	background: -webkit-radial-gradient(rgba(170,170,80,0.5), rgba(170,170,80,0.1));
-	background:    -moz-radial-gradient(rgba(170,170,80,0.5), rgba(170,170,80,0.1));
-	background:     -ms-radial-gradient(rgba(170,170,80,0.5), rgba(170,170,80,0.1));
-	background:         radial-gradient(rgba(170,170,80,0.5), rgba(170,170,80,0.1));
+
+	background: -webkit-radial-gradient(rgba(170,170,170,0.5), rgba(170,170,170,0.0));
+	background:    -moz-radial-gradient(rgba(170,170,170,0.5), rgba(170,170,170,0.0));
+	background:     -ms-radial-gradient(rgba(170,170,170,0.5), rgba(170,170,170,0.0));
+	background:         radial-gradient(rgba(170,170,170,0.5), rgba(170,170,170,0.0));
+
 }
 
 .pb_button_play {
