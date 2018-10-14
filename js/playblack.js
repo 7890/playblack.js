@@ -23,6 +23,8 @@ $.fn.playblack=function(id)
 	var PB_DEFAULT_BLOCK_SIZE=80;
 	var left_off=0; //set in set_block_size()
 	var load_region_height=7;
+	var pos_poller; //interval set in "loadeddata" handler
+	var poll_ms=50; //if duration < 60 sec
 
 	// /!\ utf-8 char
 	var HTML_WARN_PREFIX="&#9888;&nbsp;";
@@ -189,7 +191,6 @@ $.fn.playblack=function(id)
 		time_mousepos_div=      player_div.find(".pb_time_mouse_position");
 
 		progress_container_div= player_div.find(".pb_progress_container");
-
 		progress_div=           player_div.find(".pb_progress_over");
 		nav_div=                player_div.find(".pb_navigate_over");
 		wave_img=               player_div.find(".pb_wave_image");
@@ -421,6 +422,7 @@ $.fn.playblack=function(id)
 				nav_div.css({"display":"inline-block"});
 				time_mousepos_div.css({"display":"inline-block"});
 			}
+			create_position_poller();
 			set_mouse_cursor();
 
 			if(callbacks[CB_LOADED]!=undefined)
@@ -1110,6 +1112,22 @@ from libsndfile:
 		load_region_container_toggle++;
 	}; /*end display_load_regions()*/
 
+	var create_position_poller=function()
+	{
+		clearInterval(pos_poller);
+		if(duration>=60){return;}
+
+		pos_poller=setInterval(function()
+		{
+			if(is_playing)
+			{
+				current_time=audio_ctx.currentTime;
+				set_play_progress();
+				set_time_info();
+			}
+		}, poll_ms);
+	};
+
 	var set_play_progress=function()
 	{
 		var f=current_time/duration;
@@ -1160,10 +1178,10 @@ from libsndfile:
 		var cut_start=11;
 		var cut_length=8;
 
-		if(duration<10) //s.xxx
+		if(duration<60) //ss.xxx
 		{
-			cut_start+=7;
-			cut_length=5;
+			cut_start+=6;
+			cut_length=6;
 		}
 		else if(duration<600)//m:ss
 		{
