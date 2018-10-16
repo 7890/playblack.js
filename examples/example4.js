@@ -2,6 +2,7 @@
 "use strict";
 //handle to player in global context
 var pb;
+var load_player;
 
 $(document).ready(function(e) {
 var tracks=[];
@@ -13,6 +14,11 @@ for(var i=0;i<tracks.length;i++)
 	//add common / non-default properties to tracks
 	tracks[i].show_url=true;
 }
+
+load_player=function()
+{
+	pb.load(tracks[0]);
+};
 
 console.log("example4.js: create playblack instances");
 pb=$("body").playblack();
@@ -31,7 +37,6 @@ pb.on_loaded(function(obj)
 	obj.play();
 });
 
-pb.load(tracks[0]);
 console.log("example4.js: done");
 });
 /*EOF*/

@@ -5,6 +5,8 @@ var pb;
 //holding playable items
 var tracks=[];
 
+var load_selection;
+
 $(document).ready(function(e) {
 //"trick" browser to not use cached version. for testing display of load regions.
 var no_cache_extension="?foo="+new Date().getTime();
@@ -67,11 +69,18 @@ for(var i=0;i<tracks.length;i++)
 	tracks[i].show_url=true;
 	tracks[i].audio+=no_cache_extension;
 }
+/*
 sel.change(function ()
 {
 	pb.load(tracks[sel.val()]);
 });
+*/
 sel.insertAfter("h1");
+
+load_selection=function()
+{
+	pb.load(tracks[sel.val()]);
+}
 
 console.log("example1.js: create playblack instance");
 pb=$("body").playblack();

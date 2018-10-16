@@ -13,7 +13,7 @@ var pb;
 $(document).ready(function(e)
 {
 	pb=$("body").playblack();
-	pb.load({"audio":"https://archive.org/download/testmp3testfile/mpthreetest.mp3"});
+//	pb.load({"audio":"https://archive.org/download/testmp3testfile/mpthreetest.mp3"});
 });
 </script>
 </head>
@@ -25,6 +25,7 @@ $(document).ready(function(e)
 <li>Get playblack handle when $(document).ready</li>
 <li>Operate on playback handle</li>
 </ul>
+<input type="button" value="Load" onclick="javascript:pb.load({'audio':'https://archive.org/download/testmp3testfile/mpthreetest.mp3'});"></input>
 <!-- ================= -->
 <div style="background: #aaaaaa;">
 <xmp><head>
@@ -36,7 +37,7 @@ $(document).ready(function(e)
 		$(document).ready(function(e)
 		{
 			pb=$("body").playblack();
-			pb.load({"audio":"https://archive.org/download/testmp3testfile/mpthreetest.mp3"});
+			//pb.load({"audio":"https://archive.org/download/testmp3testfile/mpthreetest.mp3"});
 		});
 	</script>
 </head></xmp>

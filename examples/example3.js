@@ -7,6 +7,9 @@ var hide_players;
 var stack_players;
 var stop_all;
 var play_all;
+
+var load_players;
+
 $(document).ready(function(e) {
 var tracks=[];
 tracks.push({
@@ -78,15 +81,19 @@ play_all=function()
 	}
 };
 
-console.log("example3.js: create playblack instances");
+load_players=function()
+{
+	for(var i=0;i<tracks.length;i++)
+	{
+		pb[i].load(tracks[i]);
+	}
+};
+
 for(var i=0;i<tracks.length;i++)
 {
-	pb[i]=$("body").playblack();
-	pb[i].load(tracks[i]);
+	pb.push($("body").playblack());
 }
-//set custom size for 2nd and 3rd player
-pb[1].size(150);
-pb[2].size(40);
+
 console.log("example3.js: done");
 });
 /*EOF*/
