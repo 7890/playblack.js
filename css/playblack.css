@@ -128,8 +128,8 @@ stylesheet for 'playblack' (sticky html5 audio player)
 .pb_button_image {
 	padding: 2px;
 	cursor: pointer;
-	-webkit-animation: fadeIn 0.1s;
-	animation: fadeIn 0.1s;
+/*	-webkit-animation: fadeIn 0.1s;
+	animation: fadeIn 0.1s;*/
 }
 
 .pb_button_image:hover {
