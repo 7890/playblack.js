@@ -1221,7 +1221,7 @@ from libsndfile:
 		<div class="pb_button_container noselect">\
 			<img class="pb_button_image pb_button_play" src="../img/drawing_button_play.svg"></img>\
 			<img class="pb_button_image pb_button_pause" src="../img/drawing_button_pause.svg"></img>\
-<img class="pb_button_image pb_status_busy" src="../img/loader-02.gif"></img>\
+			<img class="pb_button_image pb_status_busy" src="../img/loader-02.gif"></img>\
 		</div>\
 	</div>\
 	<img class="pb_wave_image noselect"></img>\
