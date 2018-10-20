@@ -42,6 +42,9 @@ $.fn.playblack=function(id)
 	//registered callbacks will survive load()
 	var callbacks=[];
 
+	//registered slave players
+	var slaves=[];
+
 	//used in load()
 	var default_params={
 		"audio":          null  //url to audio file
@@ -61,6 +64,7 @@ $.fn.playblack=function(id)
 		, "show_cover":   true  //bool
 		, "show_buttons": true  //bool
 		, "size":         PB_DEFAULT_BLOCK_SIZE //int: block size
+		, "slave":        false //bool: if true, mouse actions are ignored
 	};
 
 	//filled and merged with user params in load()
@@ -235,9 +239,9 @@ $.fn.playblack=function(id)
 			_clog("mouseenter");
 			mouse_inside=true;
 			last_clientx=event.clientX;
+			if(params.slave){return;}
 			if(!can_play){return;}
 			if(audio_ctx.duration=="Infinity"){return;}
-			//set_mouse_cursor(); in mousemove
 		});
 
 		mouse_nav_div.on("mouseleave", function(event)
@@ -258,6 +262,7 @@ $.fn.playblack=function(id)
 		{
 			if(mouse_button_down) {mouse_drag=true;}
 			last_clientx=event.clientX;
+			if(params.slave){return;}
 			if(!can_play){return;}
 			if(audio_ctx.duration=="Infinity"){return;}
 			nav_div.css({"display":"inline-block"});
@@ -273,6 +278,10 @@ $.fn.playblack=function(id)
 				if(mouse_drag)
 				{
 					//seek to dragged mouse position
+					//seek slaves first
+					if(slaves.length>0)
+					{for(var i=0;i<slaves.length;i++){slaves[i].seek(mouse_position_s);}}
+					//seek "self"
 					audio_ctx.currentTime=mouse_position_s;
 					if(params.navplay) {play();}
 				}
@@ -284,9 +293,12 @@ $.fn.playblack=function(id)
 			_clog("mousedown");
 			mouse_drag=false;
 			mouse_button_down=true;
+			if(params.slave){return;}
 			if(!can_play){return;}
 			//possibly a live stream
 			if(audio_ctx.duration=="Infinity"){return;}
+			if(slaves.length>0)
+			{for(var i=0;i<slaves.length;i++){slaves[i].seek(mouse_position_s);}}
 			audio_ctx.currentTime=mouse_position_s;
 			if(params.navplay) {play();}
 		});
@@ -308,12 +320,14 @@ $.fn.playblack=function(id)
 		button_play_img.on("mousedown", function(event)
 		{
 			_clog("play clicked");
+			if(params.slave){return;}
 			play();
 		});
 
 		button_pause_img.on("mousedown", function(event)
 		{
 			_clog("pause clicked");
+			if(params.slave){return;}
 			pause();
 		});
 
@@ -325,6 +339,7 @@ $.fn.playblack=function(id)
 			mouse_inside=true;
 			mouse_drag=false;
 			mouse_button_down=true;
+			if(params.slave){return;}
 			if(!can_play){return;}
 			if(audio_ctx.duration=="Infinity"){return;}
 			set_mouse_cursor();
@@ -730,6 +745,8 @@ $.fn.playblack=function(id)
 	var set_time_info=function()
 	{
 		if(is_seeking){return;}
+		//don't enforce display to be 00:00:00
+		if(isNaN(duration)||duration<=0){return;}
 		time_and_status_div.html(
 			format_seconds(current_time)
 			+"&nbsp;/&nbsp;"
@@ -759,12 +776,15 @@ $.fn.playblack=function(id)
 	var play=function()
 	{
 		if(audio_ctx==undefined || audio_ctx==null || !track_loaded){return;}
+		if(slaves.length>0)
+		{for(var i=0;i<slaves.length;i++){slaves[i].play();}}
 		audio_ctx.play();
 	};
 
 	var pause=function()
 	{
 		if(audio_ctx==undefined || audio_ctx==null || !track_loaded){return;}
+		if(slaves.length>0){for(var i=0;i<slaves.length;i++){slaves[i].pause();}}
 		audio_ctx.pause();
 	};
 
@@ -854,6 +874,9 @@ from libsndfile:
 	var seek=function(time_s, whence)
 	{
 		if(audio_ctx==undefined || audio_ctx==null || !track_loaded){return;}
+		if(slaves.length>0)
+		{for(var i=0;i<slaves.length;i++){slaves[i].seek(time_s, whence);}}
+
 		if(time_s!=undefined)
 		{
 			if(whence==undefined) {whence=SEEK_SET;}
@@ -872,6 +895,7 @@ from libsndfile:
 					break;
 				default:
 			}
+			current_time=audio_ctx.currentTime;
 		}
 		return audio_ctx.currentTime;
 	}/*end seek()*/
@@ -945,6 +969,15 @@ from libsndfile:
 		return null;
 	};
 
+	var add_slave=function(pb_instance)
+	{
+		///.. some checks here...
+
+		//slave can't have other slaves
+		if(params.slave){return;}
+		slaves.push(pb_instance);
+	};
+
 	var get_height=function()
 	{
 		return params.size+title_div.height();
@@ -981,6 +1014,7 @@ from libsndfile:
 			, "props_clone_time":  new Date().getTime()
 			, "creation_time":     pb_creation_time
 			, "last_load_time":    pb_load_call_time
+			, "slaves_count":      slaves.length
 		}, params);
 	};
 
@@ -1042,7 +1076,7 @@ from libsndfile:
 
 	var seconds_to_pixels=function(sec)
 	{
-		if(duration<=0 || sec <=0) {return left_off;}
+		if(isNaN(duration) || duration<=0 || sec <=0) {return left_off;}
 		var f=sec/duration;
 		return left_off + ($(window).width()-left_off) * f;
 	};
@@ -1122,7 +1156,7 @@ from libsndfile:
 	var create_position_poller=function()
 	{
 		clearInterval(progress_poller);
-		if(duration>=60){return;}
+		if(duration<=0||duration>=60){return;}
 
 		progress_poller=setInterval(function()
 		{
@@ -1293,6 +1327,7 @@ from libsndfile:
 		, "on_loaded":   function(cb)    {return set_callback(CB_LOADED, cb);}
 		, "on_error":    function(cb)    {return set_callback(CB_ERROR, cb);}
 		, "on_end":      function(cb)    {return set_callback(CB_END, cb);}
+		, "add_slave":   function(pb_instance) {add_slave(pb_instance);}
 		//for more control, using the audio element directly is always an option
 		, "audio":	function() {return audio_ctx;} //get
 	}; /*end return object*/
