@@ -14,7 +14,7 @@ var hard_sync;
 var A;
 var B;
 var toggle;
-var current;
+var current=0;
 
 $(document).ready(function(e) {
 var tracks=[];
