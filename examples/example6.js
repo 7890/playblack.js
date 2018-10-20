@@ -116,22 +116,23 @@ toggle=function()
 /*
 pseudo_sync=function()
 {
-	pb[0].audio().currentTime=pb[1].audio().currentTime;
+	pb[1].audio().currentTime=pb[0].audio().currentTime;
 };
 */
 
 hard_sync=function(bool)
 {
-	pb[1].pause();
+	//operate on A, B will follow
+	pb[0].pause();
 	setTimeout(function(){
-		pb[1].seek(pb[1].audio().currentTime)
+		pb[0].seek(pb[0].audio().currentTime)
 	},100);
 
 	if(bool==undefined){return;}
 	if(bool) //play
 	{
 		setTimeout(function(){
-			pb[1].play();
+			pb[0].play();
 		},100);
 	}
 };
