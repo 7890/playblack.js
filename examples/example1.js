@@ -18,7 +18,7 @@ tracks.push({
 	, title: "MP3 Test"
 });
 tracks.push({
-	audio: "https://people.xiph.org/~giles/2012/opus/ehren-paper_lights-96.opus"
+	audio: "https://www.opus-codec.org/static/examples/ehren-paper_lights-96.opus"
 	, title: "OPUS Test"
 });
 tracks.push({
